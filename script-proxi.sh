@@ -13,11 +13,12 @@ NC='\033[0m' # Sin color
 # --- FUNCIÓN: INFORMACIÓN DE RED Y ESTADO ---
 mostrar_info() {
     clear
+    IP_LOCAL=$(hostname -I | awk '{print $1}')
     echo -e "${BLUE}======================================================"
     echo -e "       SISTEMA DE GESTIÓN DE PROXY (SQUID)"
     echo -e "======================================================"
     echo -e "${NC}FECHA ACTUAL: $(date)"
-    echo -e "DATOS DE RED (Tu IP es: 192.168.1.31):"
+    echo -e "DATOS DE RED (Tu IP es: $IP_LOCAL):"
     ip -4 addr show | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/^/  - /'
     
     echo -e "\nESTADO DEL SERVICIO:"
