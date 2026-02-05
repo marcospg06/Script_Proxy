@@ -62,4 +62,76 @@ generar_trafico_prueba() {
     read -p "Presiona Enter para continuar..."
 }
 
+# --- LÓGICA DE PARÁMETROS (EJECUCIÓN DIRECTA) ---
+if [ $# -gt 0 ]; then
+    case "$1" in
+        --install) sudo apt update && sudo apt install -y squid ;;
+        --ansible) ansible-playbook install_proxy.yml ;;
+        --docker)  docker build -t proxy-ubuntu . && docker run -d -p 3128:3128 proxy-ubuntu ;;
+        --start)   sudo systemctl start squid ;;
+        --stop)    sudo systemctl stop squid ;;
+        --remove)  sudo apt purge -y squid ;;
+        --test)    generar_trafico_prueba ;;
+        *) echo "Uso: $0 {--install|--ansible|--docker|--start|--stop|--remove|--test}" ;;
+    esac
+    exit 0
+fi
 
+# --- MENÚ PRINCIPAL (BUCLE) ---
+while true; do
+    mostrar_info
+    echo -e "${BLUE}1.${NC} INSTALACIÓN"
+    echo -e "${BLUE}2.${NC} ELIMINACIÓN DEL SERVICIO"
+    echo -e "${BLUE}3.${NC} PUESTA EN MARCHA (Start)"
+    echo -e "${BLUE}4.${NC} PARADA (Stop)"
+    echo -e "${BLUE}5.${NC} CONSULTAR LOGS"
+    echo -e "${BLUE}6.${NC} EDITAR CONFIGURACIÓN (squid.conf)"
+    echo -e "${BLUE}7.${NC} GENERAR TRÁFICO DE PRUEBA (Auto-Log)"
+    echo -e "${BLUE}0.${NC} SALIR"
+
+    echo -ne "\n${GREEN}Seleccione una opción: ${NC}"
+    read opcion
+
+    case "$opcion" in
+        1)
+            echo -e "\nElija método de instalación:"
+            echo "a) Comandos estándar (apt)"
+            echo "b) Ansible Playbook"
+            echo "c) Docker Container"
+            read -p "Sub-opción: " met
+            case "$met" in
+                a) sudo apt update && sudo apt install -y squid ;;
+                b) ansible-playbook install_proxy.yml ;;
+                c) docker build -t proxy-ubuntu . && docker run -d -p 3128:3128 proxy-ubuntu ;;
+                *) echo "Método no válido" ;;
+            esac
+            ;;
+        2)
+            sudo apt purge -y squid && sudo apt autoremove -y
+            echo "Servicio eliminado."
+            ;;
+        3)
+            sudo systemctl start squid && echo -e "${GREEN}Servicio iniciado.${NC}"
+            ;;
+        4)
+            sudo systemctl stop squid && echo -e "${RED}Servicio detenido.${NC}"
+            ;;
+        5)
+            consultar_logs
+            ;;
+        6)
+            sudo nano /etc/squid/squid.conf
+            ;;
+        7)
+            generar_trafico_prueba
+            ;;
+        0)
+            echo "Saliendo..."
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}Opción no válida ($opcion). Intenta de nuevo.${NC}"
+            ;;
+    esac
+    sleep 1
+done
